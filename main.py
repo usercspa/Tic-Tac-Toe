@@ -134,7 +134,7 @@ def has_drawn(game_array):
 #end screen
 def display_message(content):
     pygame.time.delay(500)
-    win.fill(WHITE)
+    win.fill(BLACK)
     end_text = END_FONT.render(content, 1, RED)
     win.blit(end_text, ((WIDTH - end_text.get_width()) // 2, (WIDTH - end_text.get_height()) // 2))
     pygame.display.update()
