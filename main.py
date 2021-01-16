@@ -128,17 +128,26 @@ def has_drawn(game_array):
             if game_array[i][j][2] == "":
                 return False
 
-    display_message("Game draw!")
+    draw_message("Game draw!")
     return True
 
 #end screen
 def display_message(content):
     pygame.time.delay(500)
     win.fill(WHITE)
-    end_text = END_FONT.render(content, 1, BLACK)
+    end_text = END_FONT.render(content, 1, RED)
     win.blit(end_text, ((WIDTH - end_text.get_width()) // 2, (WIDTH - end_text.get_height()) // 2))
     pygame.display.update()
     pygame.time.delay(3000)
+
+#draw message
+def draw_message(content):
+    pygame.time.delay(500)
+    win.fill(BLACK)
+    end_text = END_FONT.render(content, 1, WHITE)
+    win.blit(end_text, ((WIDTH - end_text.get_width()) // 2, (WIDTH - end_text.get_height()) // 2))
+    pygame.display.update()
+    pygame.time.delay(3000)    
 
 
 def render():
