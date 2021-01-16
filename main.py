@@ -1,192 +1,185 @@
-# import libraries 
-import pygame as pg,sys
+#import libraries
+import pygame
 from pygame.locals import *
 import time
+import math
 
-#initialize global variables
-XO = 'x'
-winner = None
-draw = False
-width = 400
-height = 400
-white = (255, 255, 255)
-line_color = (10,10,10)
-
-#TicTacToe 3x3 board
-TTT = [[None]*3,[None]*3,[None]*3]
+#initializing pygame
+pygame.init()
 
 #initializing pygame window
-pg.init()
-fps = 30
-CLOCK = pg.time.Clock()
-screen = pg.display.set_mode((width, height+100),0,32)
-pg.display.set_caption("Tic Tac Toe")
+WIDTH = 500
+ROWS = 3
+win = pygame.display.set_mode((WIDTH, WIDTH))
+pygame.display.set_caption("Tic Tac Toe :)")
 
-#loading the images
-opening = pg.image.load('TTT.png')
-x_img = pg.image.load('X.png')
-o_img = pg.image.load('O.png')
-#resizing images
-x_img = pg.transform.scale(x_img, (80,80))
-o_img = pg.transform.scale(o_img, (80,80))
-opening = pg.transform.scale(opening, (width, height+100))
+#colours
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (200, 200, 200)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+##loading the images
+X_IMAGE = pygame.transform.scale(pygame.image.load("x.png"), (150, 150))
+O_IMAGE = pygame.transform.scale(pygame.image.load("o.png"), (150, 150))
+opening = pygame.image.load('ttt.png')
+
+#setting fonts
+END_FONT = pygame.font.SysFont('courier', 40)
 
 #define functions
+#start screen
 def game_opening():
-    screen.blit(opening,(0,0))
-    pg.display.update()
+    win.blit(opening,(0,0))
+    pygame.display.update()
     time.sleep(1)
-    screen.fill(white)
 
-    # Drawing vertical lines
-    pg.draw.line(screen,line_color,(width/3,0),(width/3, height),7)
-    pg.draw.line(screen,line_color,(width/3*2,0),(width/3*2, height),7)
+#draw grid
+def draw_grid():
+    gap = WIDTH // ROWS
+
+    # Starting points
+    x = 0
+    y = 0
+
+    for i in range(ROWS):
+        x = i * gap
+
+        pygame.draw.line(win, GRAY, (x, 0), (x, WIDTH), 3)
+        pygame.draw.line(win, GRAY, (0, x), (WIDTH, x), 3)
+
+
+def initialize_grid():
+    dis_to_cen = WIDTH // ROWS // 2
+
+    #initializing the array
+    game_array = [[None]*3,[None]*3,[None]*3]
+
+    for i in range(len(game_array)):
+        for j in range(len(game_array[i])):
+            x = dis_to_cen * (2 * j + 1)
+            y = dis_to_cen * (2 * i + 1)
+
+            # Adding centre coordinates
+            game_array[i][j] = (x, y, "", True)
+
+    return game_array
+
+
+def click(game_array):
+    global x_turn, o_turn, images
+
+    #position of mouse 
+    m_x, m_y = pygame.mouse.get_pos()
+
+    for i in range(len(game_array)):
+        for j in range(len(game_array[i])):
+            x, y, char, can_play = game_array[i][j]
+
+            #distance between mouse and the centre of the square
+            dis = math.sqrt((x - m_x) ** 2 + (y - m_y) ** 2)
+
+            #if inside the square
+            if dis < WIDTH // ROWS // 2 and can_play:
+                if x_turn:  
+                    images.append((x, y, X_IMAGE))
+                    x_turn = False
+                    o_turn = True
+                    game_array[i][j] = (x, y, 'x', False)
+
+                elif o_turn:  
+                    images.append((x, y, O_IMAGE))
+                    x_turn = True
+                    o_turn = False
+                    game_array[i][j] = (x, y, 'o', False)
+
+
+#check winner
+def has_won(game_array):
     
-    # Drawing horizontal lines
-    pg.draw.line(screen,line_color,(0,height/3),(width, height/3),7)
-    pg.draw.line(screen,line_color,(0,height/3*2),(width, height/3*2),7)
-    draw_status()
+    #check rows
+    for row in range(len(game_array)):
+        if (game_array[0][2] == game_array[1][2] == game_array[2][2]) and game_array[0][2] != "":
+            display_message(game_array[0][2].upper() + " has won!")
+            return True
 
-def draw_status():
-    global draw
-    if winner is None:
-        message = XO.upper() + "'s Turn"
-    else:
-        message = winner.upper() + " won!"
-    if draw:
-        message = 'Game Draw!'
-    font = pg.font.Font(None, 30)
-    text = font.render(message, 1, (255, 255, 255))
-    
-    # copy the rendered message onto the board
-    screen.fill ((0, 0, 0), (0, 400, 500, 100))
-    text_rect = text.get_rect(center=(width/2, 500-50))
-    screen.blit(text, text_rect)
-    pg.display.update()
+    #check columns
+    for col in range(len(game_array)):
+        if (game_array[0][2] == game_array[1][2] == game_array[2][2]) and game_array[0][2] != "":
+            display_message(game_array[0][2].upper() + " has won!")
+            return True
 
-def check_win():
-    global TTT, winner,draw
-    
-    # check for winning rows
-    for row in range (0,3):
-        if ((TTT [row][0] == TTT[row][1] == TTT[row][2]) and(TTT [row][0] is not None)):
-            # this row won
-            winner = TTT[row][0]
+    #check diagonal
+    if (game_array[0][0][2] == game_array[1][1][2] == game_array[2][2][2]) and game_array[0][0][2] != "":
+        display_message(game_array[0][0][2].upper() + " has won!")
+        return True
 
-            #draw winning line
-            pg.draw.line(screen, (250,0,0), (0, (row + 1)*height/3 -height/6),\
-                              (width, (row + 1)*height/3 - height/6 ), 4)
-            break
-    
-    # check for winning columns
-    for col in range (0, 3):
-        if (TTT[0][col] == TTT[1][col] == TTT[2][col]) and (TTT[0][col] is not None):
-           
-            # this column won
-            winner = TTT[0][col]
-           
-            #draw winning line
-            pg.draw.line (screen, (250,0,0),((col + 1)* width/3 - width/6, 0),\
-                          ((col + 1)* width/3 - width/6, height), 4)
-            break
-    
-    # check for diagonal winners
-    if (TTT[0][0] == TTT[1][1] == TTT[2][2]) and (TTT[0][0] is not None):
-        
-        # game won diagonally left to right
-        winner = TTT[0][0]
+    if (game_array[0][2][2] == game_array[1][1][2] == game_array[2][0][2]) and game_array[0][2][2] != "":
+        display_message(game_array[0][2][2].upper() + " has won!")
+        return True
 
-        #draw winning line
-        pg.draw.line (screen, (250,70,70), (50, 50), (350, 350), 4)
-    if (TTT[0][2] == TTT[1][1] == TTT[2][0]) and (TTT[0][2] is not None):
-        
-        # game won diagonally right to left
-        winner = TTT[0][2]
+    return False
 
-        #draw winning line
-        pg.draw.line (screen, (250,70,70), (350, 50), (50, 350), 4)
-    if(all([all(row) for row in TTT]) and winner is None ):
-        draw = True
-    draw_status()    
+#check game draw
+def has_drawn(game_array):
+    for i in range(len(game_array)):
+        for j in range(len(game_array[i])):
+            if game_array[i][j][2] == "":
+                return False
 
-def drawXO(row,col):
-    global TTT,XO
-    if row==1:
-        posx = 30
-    if row==2:
-        posx = width/3 + 30
-    if row==3:
-        posx = width/3*2 + 30
-    if col==1:
-        posy = 30
-    if col==2:
-        posy = height/3 + 30
-    if col==3:
-        posy = height/3*2 + 30
-    TTT[row-1][col-1] = XO
-    if(XO == 'x'):
-        screen.blit(x_img,(posy,posx))
-        XO= 'o'
-    else:
-        screen.blit(o_img,(posy,posx))
-        XO= 'x'
-    pg.display.update()
-    #print(posx,posy)
-    #print(TTT)
+    display_message("Game draw!")
+    return True
 
-def userClick():
-    
-    #get coordinates of mouse click
-    x,y = pg.mouse.get_pos()
-   
-    #get column of mouse click (1-3)
-    if(x<width/3):
-        col = 1
-    elif (x<width/3*2):
-        col = 2
-    elif(x<width):
-        col = 3
-    else:
-        col = None
-    
-    #get row of mouse click (1-3)
-    if(y<height/3):
-        row = 1
-    elif (y<height/3*2):
-        row = 2
-    elif(y<height):
-        row = 3
-    else:
-        row = None
-    
-    #print(row,col)
-    if(row and col and TTT[row-1][col-1] is None):
-        global XO
-        #draw the x or o on screen
-        drawXO(row,col)
-        check_win()
+#end screen
+def display_message(content):
+    pygame.time.delay(500)
+    win.fill(WHITE)
+    end_text = END_FONT.render(content, 1, BLACK)
+    win.blit(end_text, ((WIDTH - end_text.get_width()) // 2, (WIDTH - end_text.get_height()) // 2))
+    pygame.display.update()
+    pygame.time.delay(3000)
 
-def reset_game():
-    global TTT, winner,XO, draw
-    time.sleep(3)
-    XO = 'x'
-    draw = False
+
+def render():
+    win.fill(WHITE)
+    draw_grid()
+
+    for image in images:
+        x, y, IMAGE = image
+        win.blit(IMAGE, (x - IMAGE.get_width() // 2, y - IMAGE.get_height() // 2))
+
+    pygame.display.update()
+
+#main loop
+def main():
     game_opening()
-    winner=None
-    TTT = [[None]*3,[None]*3,[None]*3]
 
-game_opening()
+    global x_turn, o_turn, images, draw
 
-# run the game loop forever
-while(True):
-    for event in pg.event.get():
-        if event.type == QUIT:
-            pg.quit()
-            sys.exit()
-        elif event.type is MOUSEBUTTONDOWN:
-            # the user clicked; place an X or O
-            userClick()
-            if(winner or draw):
-                reset_game()
-    pg.display.update()
-    CLOCK.tick(fps)
+    images = []
+    draw = False
+
+    run = True
+
+    x_turn = True
+    o_turn = False
+
+    game_array = initialize_grid()
+
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                click(game_array)
+
+        render()
+
+        if has_won(game_array) or has_drawn(game_array):
+            run = False
+
+
+while True:
+    if __name__ == '__main__':
+        main()
